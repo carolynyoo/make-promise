@@ -72,7 +72,6 @@ describe('A promise', function(){
   });
 
   describe('that is not yet resolved', function(){
-
     it('does not call any success handlers yet', function(){
       promiseForNum.then( fn.setFoo10 );
       expect( fn.setFoo10 ).not.toHaveBeenCalled();
@@ -120,7 +119,7 @@ describe('A promise', function(){
   // But what if events occur in opposite order?
   describe('that already has a success handler', function(){
 
-    it('calls that handler when resolved', function(){
+   it('calls that handler when resolved', function(){
       promiseForNum.then( fn.setFoo10 );
       numDeferral.resolve();
       expect( fn.setFoo10 ).toHaveBeenCalled();

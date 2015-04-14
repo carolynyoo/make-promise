@@ -19,14 +19,28 @@ $Promise.prototype.then = function (successCb, errorCb) {
     successCb: successCb, 
     errorCb: errorCb
   });
+
   if (this.state==='resolved') {
-    this.callHandlers();
+    this.callHandlers('success');
+  }
+  if (this.state==='rejected') {
+    this.callHandlers('error');
   }
 };
 
-$Promise.prototype.callHandlers = function () {
-  return this.handlerGroups.shift().successCb(this.value);
+$Promise.prototype.callHandlers = function (type) {
+  if (type==='success' && this.handlerGroups[0].successCb) {
+    return this.handlerGroups.shift().successCb(this.value);
+  } else if (type==='error' && this.handlerGroups[0].errorCb) {
+    return this.handlerGroups.shift().errorCb(this.value);
+  } else {
+    return 'error';
+  }
 };
+
+$Promise.prototype.catch = function (func) {
+  this.then(null, func);
+}
 
 var Deferral = function () {
   this.$promise = new $Promise();
@@ -40,9 +54,10 @@ Deferral.prototype.resolve = function (data) {
   if (this.$promise.state === 'pending') {
     this.$promise.value = data;
     this.$promise.state = 'resolved';
-    // iffy 
-    for (var i=0; i<this.$promise.handlerGroups.length; i++) {
-      this.$promise.callHandlers();
+    // note - garbage collection of handlerGroups/array shift had you save this variable separately
+    var len = this.$promise.handlerGroups.length;
+    for (var i=0; i<len; i++) {
+      this.$promise.callHandlers('success');
     }
   }
 };
@@ -51,7 +66,12 @@ Deferral.prototype.reject = function (err) {
   if (this.$promise.state === 'pending') {
     this.$promise.value = err;
     this.$promise.state = 'rejected';
+    var len = this.$promise.handlerGroups.length;
+    for (var i=0; i<len; i++) {
+      this.$promise.callHandlers('error');
+    }
   }
+
 };
 
 /*-------------------------------------------------------
